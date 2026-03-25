@@ -1,0 +1,46 @@
+name: Python CI (Poetry)
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  test:
+    name: Test with Poetry
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          poetry-version: 1.7.1
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run lint (flake8 if installed)
+        run: |
+          if poetry run python -c "import flake8" &> /dev/null; then
+            poetry run flake8 .
+          elif poetry run python -c "import ruff" &> /dev/null; then
+            poetry run ruff check .
+          else
+            echo "No linter installed, skipping lint step."
+          fi
+
+      - name: Run tests (pytest if installed)
+        run: |
+          if poetry run python -c "import pytest" &> /dev/null; then
+            poetry run pytest
+          else
+            echo "No pytest installed, skipping test step."
+          fi
